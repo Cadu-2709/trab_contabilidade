@@ -14,7 +14,6 @@ app.get('/', (req, res) => {
 });
 
 app.get('/plano-de-contas', async (req, res) => {
-    // ... (código existente, sem alterações)
     try {
         const planoDeContas = await queries.getPlanoDeContas();
         res.status(200).json(planoDeContas);
@@ -24,19 +23,7 @@ app.get('/plano-de-contas', async (req, res) => {
     }
 });
 
-// --- NOVA ROTA ADICIONADA ---
-app.get('/lancamentos', async (req, res) => {
-    try {
-        const lancamentos = await queries.getLancamentos();
-        res.status(200).json(lancamentos);
-    } catch (error) {
-        console.error('Erro ao buscar lançamentos:', error);
-        res.status(500).json({ error: 'Erro ao buscar lançamentos.' });
-    }
-});
-
 app.post('/lancamentos', async (req, res) => {
-    // ... (código existente, sem alterações)
     const { data, historico, partidas } = req.body;
     if (!data || !historico || !partidas || !Array.isArray(partidas) || partidas.length < 2) {
         return res.status(400).json({ error: 'Dados inválidos.' });
@@ -63,6 +50,17 @@ app.post('/lancamentos', async (req, res) => {
     } catch (error) {
         console.error('Erro ao criar lançamento:', error.message);
         res.status(500).json({ error: 'Erro interno do servidor ao salvar o lançamento.', details: error.message });
+    }
+});
+
+// --- NOVA ROTA PARA O BALANCETE ---
+app.get('/relatorios/balancete', async (req, res) => {
+    try {
+        const balanceteData = await queries.getBalancete();
+        res.status(200).json(balanceteData);
+    } catch (error) {
+        console.error('Erro ao gerar balancete:', error);
+        res.status(500).json({ error: 'Erro ao gerar balancete.' });
     }
 });
 

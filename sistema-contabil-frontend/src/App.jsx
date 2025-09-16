@@ -1,11 +1,14 @@
-// src/App.jsx - VERSÃO ORIGINAL SIMPLES
+// src/App.jsx
 import React from 'react';
 import LancamentoForm from './components/LancamentoForm.jsx';
+import Balancete from './components/Balancete.jsx';
 
 function App() {
   return (
-    <div className="App">
+    <div style={{ maxWidth: '900px', margin: '20px auto', padding: '0 20px', fontFamily: 'Arial, sans-serif' }}>
       <LancamentoForm />
+      <hr style={{ margin: '40px 0', border: '1px solid #eee' }} />
+      <Balancete />
     </div>
   );
 }

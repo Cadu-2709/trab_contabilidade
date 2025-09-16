@@ -1,17 +1,15 @@
 // queries.js
 const { Pool } = require('pg');
 
-// Configuração da conexão com o banco de dados
 const pool = new Pool({
-  user: 'postgres',         // seu usuário do postgres
-  host: 'localhost',
-  database: 'contabil',  // o nome do seu banco de dados
-  password: 'admin', // sua senha do postgres
-  port: 5433,
+  user: 'postgres',
+  host: '127.0.0.1',
+  database: 'contabil',
+  password: 'admin',
+  port: 5433, // Lembre-se de confirmar se esta é sua porta correta
 });
 
 const getPlanoDeContas = async () => {
-    // ... (código existente, sem alterações)
     const { rows } = await pool.query('SELECT * FROM contas ORDER BY codigo');
     const contasMap = new Map();
     const contasRaiz = [];
@@ -33,7 +31,6 @@ const getPlanoDeContas = async () => {
 };
 
 const createLancamento = async (lancamento) => {
-    // ... (código existente, sem alterações)
     const { data, historico, partidas } = lancamento;
     const client = await pool.connect();
     try {
@@ -59,38 +56,48 @@ const createLancamento = async (lancamento) => {
     }
 };
 
-// --- NOVA FUNÇÃO ADICIONADA ---
-/**
- * Busca todos os lançamentos com suas partidas aninhadas.
- */
-const getLancamentos = async () => {
+// --- FUNÇÃO PARA O BALANCETE ---
+const getBalancete = async () => {
   const query = `
     SELECT
-      l.id,
-      l.data,
-      l.historico,
-      json_agg(
-        json_build_object(
-          'id', p.id,
-          'tipo_partida', p.tipo_partida,
-          'valor', p.valor,
-          'conta_id', p.id_conta,
-          'conta_codigo', c.codigo,
-          'conta_nome', c.nome
-        ) ORDER BY p.tipo_partida DESC
-      ) AS partidas
-    FROM lancamentos l
-    JOIN partidas p ON l.id = p.id_lancamento
-    JOIN contas c ON p.id_conta = c.id
-    GROUP BY l.id
-    ORDER BY l.data DESC, l.id DESC;
+      c.codigo,
+      c.nome,
+      c.natureza,
+      SUM(CASE WHEN p.tipo_partida = 'D' THEN p.valor ELSE 0 END) as total_debitos,
+      SUM(CASE WHEN p.tipo_partida = 'C' THEN p.valor ELSE 0 END) as total_creditos
+    FROM contas c
+    JOIN partidas p ON c.id = p.id_conta
+    GROUP BY c.id, c.codigo, c.nome, c.natureza
+    HAVING SUM(CASE WHEN p.tipo_partida = 'D' THEN p.valor ELSE 0 END) != SUM(CASE WHEN p.tipo_partida = 'C' THEN p.valor ELSE 0 END)
+    ORDER BY c.codigo;
   `;
   const { rows } = await pool.query(query);
-  return rows;
-}
+
+  const contasComSaldo = rows.map(conta => {
+    const saldo = parseFloat(conta.total_debitos) - parseFloat(conta.total_creditos);
+    let saldoDevedor = 0;
+    let saldoCredor = 0;
+
+    if (saldo > 0) {
+      saldoDevedor = saldo;
+    } else if (saldo < 0) {
+      saldoCredor = -saldo; // Inverte o sinal para mostrar como positivo
+    }
+    
+    return {
+      codigo: conta.codigo,
+      nome: conta.nome,
+      saldoDevedor: saldoDevedor,
+      saldoCredor: saldoCredor,
+    };
+  });
+  
+  return contasComSaldo;
+};
+
 
 module.exports = {
     getPlanoDeContas,
     createLancamento,
-    getLancamentos, // <-- Exporta a nova função
+    getBalancete,
 };
