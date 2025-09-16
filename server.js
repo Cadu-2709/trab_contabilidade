@@ -53,7 +53,6 @@ app.post('/lancamentos', async (req, res) => {
     }
 });
 
-// --- NOVA ROTA PARA O BALANCETE ---
 app.get('/relatorios/balancete', async (req, res) => {
     try {
         const balanceteData = await queries.getBalancete();
@@ -63,6 +62,37 @@ app.get('/relatorios/balancete', async (req, res) => {
         res.status(500).json({ error: 'Erro ao gerar balancete.' });
     }
 });
+
+app.get('/relatorios/movimento-conta', async (req, res) => {
+    try {
+        const { codigos, dataInicio, dataFim } = req.query;
+        if (!codigos || !dataInicio || !dataFim) {
+            return res.status(400).json({ error: 'Parâmetros insuficientes. É necessário fornecer códigos de contas, data de início e data de fim.' });
+        }
+        const codigosArray = codigos.split(',');
+        const movimentoData = await queries.getMovimentoContaPorPeriodo(codigosArray, dataInicio, dataFim);
+        res.status(200).json(movimentoData);
+    } catch (error) {
+        console.error('Erro ao gerar relatório de movimento:', error);
+        res.status(500).json({ error: 'Erro ao gerar relatório de movimento.' });
+    }
+});
+
+app.get('/relatorios/detalhe-conta', async (req, res) => {
+    try {
+        const { codigos, dataInicio, dataFim } = req.query;
+        if (!codigos || !dataInicio || !dataFim) {
+            return res.status(400).json({ error: 'Parâmetros insuficientes.' });
+        }
+        const codigosArray = codigos.split(',');
+        const detalheData = await queries.getDetalheContaPorPeriodo(codigosArray, dataInicio, dataFim);
+        res.status(200).json(detalheData);
+    } catch (error) {
+        console.error('Erro ao gerar relatório detalhado:', error);
+        res.status(500).json({ error: 'Erro ao gerar relatório detalhado.' });
+    }
+});
+
 
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);

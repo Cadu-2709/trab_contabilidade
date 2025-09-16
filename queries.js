@@ -5,8 +5,8 @@ const pool = new Pool({
   user: 'postgres',
   host: '127.0.0.1',
   database: 'contabil',
-  password: 'admin',
-  port: 5433, // Lembre-se de confirmar se esta é sua porta correta
+  password: 'admin', // Sua senha
+  port: 5433, // Sua porta
 });
 
 const getPlanoDeContas = async () => {
@@ -56,7 +56,6 @@ const createLancamento = async (lancamento) => {
     }
 };
 
-// --- FUNÇÃO PARA O BALANCETE ---
 const getBalancete = async () => {
   const query = `
     SELECT
@@ -72,18 +71,15 @@ const getBalancete = async () => {
     ORDER BY c.codigo;
   `;
   const { rows } = await pool.query(query);
-
   const contasComSaldo = rows.map(conta => {
     const saldo = parseFloat(conta.total_debitos) - parseFloat(conta.total_creditos);
     let saldoDevedor = 0;
     let saldoCredor = 0;
-
     if (saldo > 0) {
       saldoDevedor = saldo;
     } else if (saldo < 0) {
-      saldoCredor = -saldo; // Inverte o sinal para mostrar como positivo
+      saldoCredor = -saldo;
     }
-    
     return {
       codigo: conta.codigo,
       nome: conta.nome,
@@ -91,13 +87,52 @@ const getBalancete = async () => {
       saldoCredor: saldoCredor,
     };
   });
-  
   return contasComSaldo;
 };
 
+const getMovimentoContaPorPeriodo = async (codigosContas, dataInicio, dataFim) => {
+  const query = `
+    SELECT
+      c.codigo,
+      c.nome,
+      SUM(CASE WHEN p.tipo_partida = 'D' THEN p.valor ELSE 0 END) as total_debitos,
+      SUM(CASE WHEN p.tipo_partida = 'C' THEN p.valor ELSE 0 END) as total_creditos
+    FROM partidas p
+    JOIN lancamentos l ON p.id_lancamento = l.id
+    JOIN contas c ON p.id_conta = c.id
+    WHERE
+      c.codigo = ANY($1::varchar[]) AND
+      l.data BETWEEN $2 AND $3
+    GROUP BY c.codigo, c.nome;
+  `;
+  const { rows } = await pool.query(query, [codigosContas, dataInicio, dataFim]);
+  return rows;
+};
+
+const getDetalheContaPorPeriodo = async (codigosContas, dataInicio, dataFim) => {
+  const query = `
+    SELECT
+      l.data,
+      l.historico,
+      p.valor,
+      p.tipo_partida,
+      c.nome as nome_conta
+    FROM lancamentos l
+    JOIN partidas p ON l.id = p.id_lancamento
+    JOIN contas c ON p.id_conta = c.id
+    WHERE
+      c.codigo = ANY($1::varchar[]) AND
+      l.data BETWEEN $2 AND $3
+    ORDER BY l.data;
+  `;
+  const { rows } = await pool.query(query, [codigosContas, dataInicio, dataFim]);
+  return rows;
+};
 
 module.exports = {
     getPlanoDeContas,
     createLancamento,
     getBalancete,
+    getMovimentoContaPorPeriodo,
+    getDetalheContaPorPeriodo,
 };

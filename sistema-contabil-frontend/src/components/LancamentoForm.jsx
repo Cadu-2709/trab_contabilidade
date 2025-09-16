@@ -1,17 +1,16 @@
 // src/components/LancamentoForm.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import SeletorDeConta from './SeletorDeConta.jsx'; // <-- Importa o novo componente
+import SeletorDeConta from './SeletorDeConta.jsx';
 
 const LancamentoForm = () => {
-  // ... (a maior parte dos states continua igual)
   const [data, setData] = useState(new Date().toISOString().split('T')[0]);
   const [historico, setHistorico] = useState('');
   const [partidas, setPartidas] = useState([
     { id_conta: null, tipo_partida: 'D', valor: '' },
     { id_conta: null, tipo_partida: 'C', valor: '' },
   ]);
-  const [planoDeContas, setPlanoDeContas] = useState([]); // Agora vai guardar a árvore completa
+  const [planoDeContas, setPlanoDeContas] = useState([]);
   const [totalDebitos, setTotalDebitos] = useState(0);
   const [totalCreditos, setTotalCreditos] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
@@ -21,7 +20,7 @@ const LancamentoForm = () => {
     const fetchPlanoDeContas = async () => {
       try {
         const response = await axios.get('http://localhost:3001/plano-de-contas');
-        setPlanoDeContas(response.data); // Armazena a árvore de contas
+        setPlanoDeContas(response.data);
       } catch (error) {
         setErrorMessage('Erro ao buscar o plano de contas.');
         console.error(error);
@@ -30,7 +29,6 @@ const LancamentoForm = () => {
     fetchPlanoDeContas();
   }, []);
 
-  // ... (useEffect para totais, addPartida, removePartida e handleSubmit continuam iguais)
   useEffect(() => {
     let debitos = 0;
     let creditos = 0;
@@ -93,12 +91,10 @@ const LancamentoForm = () => {
     }
   };
 
-
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: 'auto' }}>
+    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h1>Novo Lançamento Contábil</h1>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        {/* Campos de Data e Histórico (sem alteração) */}
         <div style={{ display: 'flex', gap: '10px' }}>
           <div style={{ flex: 1 }}><label>Data:</label><input type="date" value={data} onChange={(e) => setData(e.target.value)} required style={{ width: '100%', padding: '8px' }}/></div>
           <div style={{ flex: 3 }}><label>Histórico:</label><input type="text" value={historico} onChange={(e) => setHistorico(e.target.value)} required style={{ width: '100%', padding: '8px' }} placeholder="Descreva o fato contábil"/></div>
@@ -107,7 +103,6 @@ const LancamentoForm = () => {
         <h3>Partidas</h3>
         {partidas.map((partida, index) => (
           <div key={index} style={{ border: '1px solid #eee', padding: '10px', borderRadius: '5px' }}>
-            {/* NOVO SELETOR HIERÁRQUICO */}
             <SeletorDeConta 
               planoDeContas={planoDeContas}
               onContaSelecionada={(contaId) => handlePartidaChange(index, 'id_conta', contaId)}
@@ -124,7 +119,6 @@ const LancamentoForm = () => {
           </div>
         ))}
         
-        {/* Botões e Totais (sem alteração) */}
         <button type="button" onClick={addPartida} style={{ padding: '10px', alignSelf: 'flex-start' }}>Adicionar Partida</button>
         <div style={{ marginTop: '20px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}>
             <strong>Total Débitos:</strong> R$ {totalDebitos.toFixed(2)}

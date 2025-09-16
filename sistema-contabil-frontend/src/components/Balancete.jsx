@@ -37,13 +37,11 @@ const Balancete = () => {
     }).then((canvas) => {
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4');
-
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const imgWidth = canvas.width;
         const imgHeight = canvas.height;
         const ratio = imgWidth / imgHeight;
         const pdfHeight = pdfWidth / ratio;
-
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
         pdf.save(`balancete-${new Date().toISOString().slice(0,10)}.pdf`);
       });
@@ -92,12 +90,10 @@ const Balancete = () => {
     );
   };
 
-  // --- LÓGICA DE FILTRO ATUALIZADA ---
   const ativos = data ? data.filter(c => c.codigo.startsWith('1')) : [];
   const passivos = data ? data.filter(c => c.codigo.startsWith('2')) : [];
   const patrimonioLiquido = data ? data.filter(c => c.codigo.startsWith('3')) : [];
   
-  // --- LÓGICA DE TOTAIS GERAIS ---
   let totalGeralDevedor = 0;
   let totalGeralCredor = 0;
   if(data) {
@@ -123,20 +119,17 @@ const Balancete = () => {
       
       <div ref={relatorioRef} style={{ background: 'white', padding: '10px' }}>
         {data && (
-          <div style={{ marginTop: '20px' }}>
-            {/* --- CHAMADAS ATUALIZADAS PARA AS TABELAS SEPARADAS --- */}
+          <div style={{ marginTop: '20px', color:'#000000ff'}}>
             {renderTabela('Ativo', ativos)}
             {renderTabela('Passivo', passivos)}
             {renderTabela('Patrimônio Líquido', patrimonioLiquido)}
-
-            {/* --- NOVA SEÇÃO DE TOTAIS GERAIS --- */}
             <div style={{ marginTop: '40px', paddingTop: '10px', borderTop: '2px solid black' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '1.1em' }}>
                 <tbody>
                   <tr style={{fontWeight: 'bold'}}>
-                    <td style={{padding: '8px', textAlign: 'right',color:'#070707ff' }}>Total Geral</td>
-                    <td style={{width: '130px', padding: '8px', textAlign: 'right', border: '1px solid #070707ff', color:'#070707ff' }}>{totalGeralDevedor.toFixed(2)}</td>
-                    <td style={{width: '130px', padding: '8px', textAlign: 'right', border: '1px solid #070707ff',color:'#070707ff' }}>{totalGeralCredor.toFixed(2)}</td>
+                    <td style={{padding: '8px', textAlign: 'right', color:'#000000ff' }}>Total Geral</td>
+                    <td style={{width: '130px', padding: '8px', textAlign: 'right', border: '1px solid #000000ff', color:'#000000ff' }}>{totalGeralDevedor.toFixed(2)}</td>
+                    <td style={{width: '130px', padding: '8px', textAlign: 'right', border: '1px solid #000000ff', color:'#000000ff' }}>{totalGeralCredor.toFixed(2)}</td>
                   </tr>
                 </tbody>
               </table>
