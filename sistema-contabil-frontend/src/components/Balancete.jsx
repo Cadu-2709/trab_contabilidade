@@ -1,3 +1,4 @@
+// src/components/Balancete.jsx
 import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import jsPDF from 'jspdf';
@@ -91,8 +92,18 @@ const Balancete = () => {
     );
   };
 
+  // --- LÓGICA DE FILTRO ATUALIZADA ---
   const ativos = data ? data.filter(c => c.codigo.startsWith('1')) : [];
-  const passivosEPL = data ? data.filter(c => c.codigo.startsWith('2') || c.codigo.startsWith('3')) : [];
+  const passivos = data ? data.filter(c => c.codigo.startsWith('2')) : [];
+  const patrimonioLiquido = data ? data.filter(c => c.codigo.startsWith('3')) : [];
+  
+  // --- LÓGICA DE TOTAIS GERAIS ---
+  let totalGeralDevedor = 0;
+  let totalGeralCredor = 0;
+  if(data) {
+    totalGeralDevedor = data.reduce((acc, conta) => acc + conta.saldoDevedor, 0);
+    totalGeralCredor = data.reduce((acc, conta) => acc + conta.saldoCredor, 0);
+  }
 
   return (
     <div style={{ marginTop: '40px' }}>
@@ -113,8 +124,28 @@ const Balancete = () => {
       <div ref={relatorioRef} style={{ background: 'white', padding: '10px' }}>
         {data && (
           <div style={{ marginTop: '20px' }}>
+            {/* --- CHAMADAS ATUALIZADAS PARA AS TABELAS SEPARADAS --- */}
             {renderTabela('Ativo', ativos)}
-            {renderTabela('Passivo e Patrimônio Líquido', passivosEPL)}
+            {renderTabela('Passivo', passivos)}
+            {renderTabela('Patrimônio Líquido', patrimonioLiquido)}
+
+            {/* --- NOVA SEÇÃO DE TOTAIS GERAIS --- */}
+            <div style={{ marginTop: '40px', paddingTop: '10px', borderTop: '2px solid black' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '1.1em' }}>
+                <tbody>
+                  <tr style={{fontWeight: 'bold'}}>
+                    <td style={{padding: '8px', textAlign: 'right',color:'#070707ff' }}>Total Geral</td>
+                    <td style={{width: '130px', padding: '8px', textAlign: 'right', border: '1px solid #070707ff', color:'#070707ff' }}>{totalGeralDevedor.toFixed(2)}</td>
+                    <td style={{width: '130px', padding: '8px', textAlign: 'right', border: '1px solid #070707ff',color:'#070707ff' }}>{totalGeralCredor.toFixed(2)}</td>
+                  </tr>
+                </tbody>
+              </table>
+              {Math.abs(totalGeralDevedor - totalGeralCredor) > 0.01 &&
+                <p style={{color: 'red', textAlign: 'center', fontWeight: 'bold'}}>
+                  Atenção: A soma dos saldos devedores não bate com a dos saldos credores!
+                </p>
+              }
+            </div>
           </div>
         )}
       </div>
